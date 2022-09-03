@@ -57,8 +57,8 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 	pub.POST("/login", func(ctx *gin.Context) {
 		fuser := user{
-			Name:     ctx.Request.PostFormValue("name"),
-			Password: ctx.Request.PostFormValue("password"),
+			Name:     ctx.PostForm("name"),
+			Password: ctx.PostForm("password"),
 		}
 
 		row := db.QueryRow(`
@@ -172,13 +172,13 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			return
 		}
 		expiry = expiry.Add(time.Duration(param) * time.Hour)
-		param, err = strconv.Atoi(ctx.Request.PostFormValue("minutes"))
+		param, err = strconv.Atoi(ctx.PostForm("minutes"))
 		if err != nil || param > 59 || param < 0 {
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
 		expiry = expiry.Add(time.Duration(param) * time.Minute)
-		param, err = strconv.Atoi(ctx.Request.PostFormValue("seconds"))
+		param, err = strconv.Atoi(ctx.PostForm("seconds"))
 		if err != nil || param > 59 || param < 0 {
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
@@ -193,8 +193,8 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		}
 
 		file := file{
-			UUID: uuid.New().String(),
-			Name: ffile.Filename,
+			UUID:   uuid.New().String(),
+			Name:   ffile.Filename,
 			Expiry: expiry,
 		}
 
@@ -248,8 +248,8 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		session := sessions.Default(ctx)
 
 		file := file{
-			UUID: ctx.Request.PostFormValue("uuid"),
-			Name: ctx.Request.PostFormValue("name"),
+			UUID: ctx.PostForm("uuid"),
+			Name: ctx.PostForm("name"),
 		}
 
 		_, err = db.Exec(`
