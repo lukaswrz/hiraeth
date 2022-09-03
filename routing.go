@@ -66,6 +66,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			FROM user
 			WHERE name = ?
 		`, fuser.Name)
+
 		var user user
 		err := row.Scan(&user.ID, &user.Password)
 		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(fuser.Password)) != nil {
@@ -222,8 +223,6 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	priv.GET("/files/:uuid/", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
-		var file file
-
 		row := db.QueryRow(`
 			SELECT uuid, name, expiry
 			FROM file
@@ -231,6 +230,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			AND owner_id = ?
 		`, ctx.Param("uuid"), session.Get("user_id"))
 
+		var file file
 		var expiry int64
 		if err := row.Scan(&file.UUID, &file.Name, &expiry); err != nil {
 			log.Printf("Could not copy values from database: %s", err.Error())
@@ -268,7 +268,20 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	})
 
 	priv.GET("/files/:uuid/:name", func(ctx *gin.Context) {
-		ctx.AbortWithStatus(404)
-		return
+		row := db.QueryRow(`
+			SELECT uuid, name
+			FROM file
+			WHERE uuid = ?
+			AND name = ?
+		`, ctx.Param("uuid"), ctx.Param("name"))
+
+		var file file
+		if err := row.Scan(&file.UUID, &file.Name); err != nil {
+			log.Printf("Could not copy values from database: %s", err.Error())
+			ctx.Redirect(http.StatusFound, "/")
+			return
+		}
+
+		ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
 	})
 }
