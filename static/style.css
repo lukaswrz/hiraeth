@@ -1,0 +1,262 @@
+@media screen {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  main {
+    width: 100vw;
+  }
+
+  @media (min-width: 576px) {
+    main {
+      width: 90vw;
+    }
+  }
+
+  @media (min-width: 768px) {
+    main {
+      width: 80vw;
+    }
+  }
+
+  @media (min-width: 992px) {
+    main {
+      width: 70vw;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    main {
+      width: 60vw;
+    }
+  }
+
+  @media (min-width: 1400px) {
+    main {
+      width: 50vw;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #121212;
+      color: #e8e8e8;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: white;
+    }
+
+    a {
+      color: #e8e8e8;
+      transition: color .1s ease-in-out;
+    }
+
+    a:hover {
+      color: white;
+      transition: color .2s ease-in-out;
+    }
+
+    input[type="file"] {
+      color: #e8e8e8;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]), button, select {
+      color: #e8e8e8;
+      background: #171717;
+      border: 2px solid #e6e6e6;
+      box-shadow: 0px 5px 15px 0px #00000080;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover {
+      background: #090909;
+      box-shadow: 0px 5px 20px 0px #000000BF;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]):focus, button:focus, select:focus {
+      background: black;
+    }
+
+    form:invalid button[type="submit"]:hover {
+      border: 2px solid #702b2b;
+    }
+
+    form.login, form.revise {
+      border: 2px dashed #242424;
+    }
+
+    body > header {
+      border-bottom: 2px dashed #262626;
+      background: #141414;
+    }
+  }
+
+  @media (prefers-color-scheme: light) {
+    body {
+      background: #f9f9f9;
+      color: #141414;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: black;
+    }
+
+    a {
+      color: #040404;
+      transition: color .1s ease-in-out;
+    }
+
+    a:hover {
+      color: black;
+      transition: color .2s ease-in-out;
+    }
+
+    input[type="file"] {
+      color: #141414;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]), button, select {
+      color: #141414;
+      background: #f9f9f9;
+      border: 2px solid #b7b7b7;
+      box-shadow: 0px 5px 10px 0px #00000040;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover {
+      background: #eaeaea;
+      box-shadow: 0px 5px 15px 0px #00000080;
+    }
+
+    input:not([type="file"]):not([type="checkbox"]):focus, button:focus, select:focus {
+      background: #e6e6e6;
+    }
+
+    form:invalid button[type="submit"]:hover {
+      border: 2px solid #4c4c4c;
+    }
+
+    form.login, form.revise {
+      border: 2px dashed #c4c4c4;
+    }
+
+    body > header {
+      border-bottom: 2px dashed #c0c0c0;
+      background: #f0f0f0;
+    }
+  }
+}
+
+body {
+  font-family: sans-serif;
+}
+
+nav.locations, nav.session {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+nav.locations > ul, nav.session > ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+nav.locations > ul > li, nav.session > ul > li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+body > header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  display: flex;
+  flex-grow: 1;
+  align-self: center;
+  flex-direction: column;
+  padding: 10px;
+}
+
+body > footer {
+  text-align: center;
+  padding: 10px;
+}
+
+input:not([type="file"]):not([type="checkbox"]), button, select {
+  display: block;
+  transition: all 0.6s ease;
+  transition-property: background, padding, margin, border, box-shadow;
+  font-size: 16px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+input[type="file"] {
+  display: block;
+  transition: all 0.6s ease;
+  transition-property: padding, margin;
+  font-size: 16px;
+}
+
+input[type="checkbox"] {
+  height: 16px;
+  width: 16px;
+}
+
+div.labeled-checkbox {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+form.login, form.upload, form.revise {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
+}
+
+form.login {
+  width: fit-content;
+  margin: auto;
+}
+
+form.login > button[type="submit"] {
+  width: fit-content;
+  align-self: center;
+}
+
+form.login > button[type="submit"] {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
+form.login > button[type="submit"]:hover, form.login > button[type="submit"]:focus {
+  padding-right: 40px;
+  padding-left: 40px;
+}

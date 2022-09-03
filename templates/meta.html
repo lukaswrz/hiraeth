@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{ block "head" . }}
+      <meta charset="utf-8" />
+      <title>{{ if .Title }}{{ .Title }} - hiraeth{{ else }}hiraeth{{ end }}</title>
+      <link href="/style.css" rel="stylesheet" />
+    {{ end }}
+  </head>
+  <body>
+    {{ template "layout" . }}
+  </body>
+</html>

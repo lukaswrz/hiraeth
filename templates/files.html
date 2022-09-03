@@ -1,0 +1,17 @@
+{{ template "layout.html" }}
+
+{{ define "content" }}
+  <ul class="files">
+    {{ range $file := .Files }}
+      <li class="file">
+        <a title="{{ $file.UUID }}" href="/files/{{ $file.UUID }}/">{{ $file.Name }}</a>
+      </li>
+    {{ end }}
+  </ul>
+
+  <form class="upload" action="/upload" method="POST" enctype="multipart/form-data" >
+    <input aria-label="File" id="file" type="file" name="file" required />
+
+    <button type="submit">Upload</button>
+  </form>
+{{ end }}

@@ -1,0 +1,32 @@
+{{ template "meta.html" . }}
+
+{{ define "layout" }}
+  <header>
+    <nav class="locations">
+      <ul>
+        <li>
+          <a href="/files">Files</a>
+        </li>
+      </ul>
+    </nav>
+    <nav class="session">
+      <ul>
+        <li>
+          <form class="logout" action="/logout" method="POST">
+            <button class="logout" type="submit">
+              Logout
+            </button>
+          </form>
+        </li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    {{ block "content" . }}
+      Placeholder content
+    {{ end }}
+  </main>
+  <footer>
+    hiraeth
+  </footer>
+{{ end }}

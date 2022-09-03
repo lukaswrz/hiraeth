@@ -1,0 +1,10 @@
+hiraeth
+hiraethctl
+!hiraethctl/
+
+hiraeth.toml
+
+hiraeth.db
+dump.rdb
+
+data/

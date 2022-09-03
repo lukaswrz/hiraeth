@@ -1,0 +1,12 @@
+{{ template "layout.html" }}
+
+{{ define "content" }}
+  <form class="revise" action="/revise" method="POST">
+    <input type="hidden" name="uuid" value="{{ .File.UUID }}" />
+
+    <label for="name">Filename</label>
+    <input id="name" type="text" name="name" placeholder="Filename" value="{{ .File.Name }}" required />
+
+    <button type="submit">Save</button>
+  </form>
+{{ end }}

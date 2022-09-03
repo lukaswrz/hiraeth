@@ -1,0 +1,15 @@
+{{ template "meta.html" }}
+
+{{ define "layout" }}
+  <main>
+    <form class="login" action="/login" method="POST">
+      <label for="name">Username</label>
+      <input id="name" type="text" name="name" placeholder="Username" required />
+
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" placeholder="Password" required />
+
+      <button type="submit">Login</button>
+    </form>
+  </main>
+{{ end }}
