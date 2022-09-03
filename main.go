@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/lukaswrz/hiraeth/config"
-	"github.com/lukaswrz/hiraeth/routing"
 	"github.com/lukaswrz/hiraeth/schema"
 )
 
@@ -76,9 +76,44 @@ func run(c config.Config) {
 		log.Fatalf("Could not initialize the database: %s", err.Error())
 	}
 
+	// Schedule the deletion of temporary files.
+	var files []file
+	func() {
+		rows, err := db.Query(`
+			SELECT uuid, expiry
+			FROM file
+		`)
+		if err != nil {
+			log.Fatalf("Could not query database: %s", err.Error())
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var file file
+			var expiry int64
+			if err := rows.Scan(&file.UUID, &expiry); err != nil {
+				log.Fatalf("Could not copy values from database: %s", err.Error())
+				return
+			}
+
+			file.Expiry = time.Unix(expiry, 0)
+
+			files = append(files, file)
+		}
+		if err = rows.Err(); err != nil {
+			log.Fatalf("Error encountered during iteration: %s", err.Error())
+			return
+		}
+	}()
+
+	for _, file := range files {
+		watch(file, c, db)
+	}
+
 	router := gin.Default()
 
-	routing.Register(router, c, db)
+	register(router, c, db)
 
 	if err := router.Run(c.Address); err != nil {
 		log.Fatal(err)

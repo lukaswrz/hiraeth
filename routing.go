@@ -1,10 +1,12 @@
-package routing
+package main
 
 import (
 	"database/sql"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -18,18 +20,7 @@ import (
 	"github.com/lukaswrz/hiraeth/config"
 )
 
-type user struct {
-	id       int
-	name     string
-	password string
-}
-
-type file struct {
-	UUID string
-	Name string
-}
-
-func Register(router *gin.Engine, c config.Config, db *sql.DB) {
+func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromFiles("login", "templates/meta.html", "templates/login.html")
 	renderer.AddFromFiles("files", "templates/meta.html", "templates/layout.html", "templates/files.html")
@@ -66,24 +57,24 @@ func Register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 	pub.POST("/login", func(ctx *gin.Context) {
 		fuser := user{
-			name:     ctx.Request.PostFormValue("name"),
-			password: ctx.Request.PostFormValue("password"),
+			Name:     ctx.Request.PostFormValue("name"),
+			Password: ctx.Request.PostFormValue("password"),
 		}
 
 		row := db.QueryRow(`
 			SELECT id, password
 			FROM user
 			WHERE name = ?
-		`, fuser.name)
+		`, fuser.Name)
 		var user user
-		err := row.Scan(&user.id, &user.password)
-		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.password), []byte(fuser.password)) != nil {
+		err := row.Scan(&user.ID, &user.Password)
+		if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(fuser.Password)) != nil {
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
 
 		session := sessions.Default(ctx)
-		session.Set("user_id", user.id)
+		session.Set("user_id", user.ID)
 		err = session.Save()
 		if err != nil {
 			log.Printf("Could not save data to session: %s", err.Error())
@@ -172,6 +163,28 @@ func Register(router *gin.Engine, c config.Config, db *sql.DB) {
 	priv.POST("/upload", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
+		expiry := time.Now()
+
+		var param int
+		param, err := strconv.Atoi(ctx.Request.PostFormValue("hours"))
+		if err != nil || param > 24 || param < 0 {
+			ctx.Redirect(http.StatusFound, "/files/")
+			return
+		}
+		expiry = expiry.Add(time.Duration(param) * time.Hour)
+		param, err = strconv.Atoi(ctx.Request.PostFormValue("minutes"))
+		if err != nil || param > 59 || param < 0 {
+			ctx.Redirect(http.StatusFound, "/files/")
+			return
+		}
+		expiry = expiry.Add(time.Duration(param) * time.Minute)
+		param, err = strconv.Atoi(ctx.Request.PostFormValue("seconds"))
+		if err != nil || param > 59 || param < 0 {
+			ctx.Redirect(http.StatusFound, "/files/")
+			return
+		}
+		expiry = expiry.Add(time.Duration(param) * time.Second)
+
 		ffile, err := ctx.FormFile("file")
 		if err != nil {
 			log.Printf("Unable to read file from form data: %s", err.Error())
@@ -182,6 +195,7 @@ func Register(router *gin.Engine, c config.Config, db *sql.DB) {
 		file := file{
 			UUID: uuid.New().String(),
 			Name: ffile.Filename,
+			Expiry: expiry,
 		}
 
 		if err := ctx.SaveUploadedFile(ffile, filepath.Join(c.Data, file.UUID)); err != nil {
@@ -191,17 +205,18 @@ func Register(router *gin.Engine, c config.Config, db *sql.DB) {
 		}
 
 		_, err = db.Exec(`
-			INSERT INTO file (uuid, name, owner_id)
-			VALUES (?, ?, ?)
-		`, file.UUID, file.Name, session.Get("user_id"))
+			INSERT INTO file (uuid, name, expiry, owner_id)
+			VALUES (?, ?, ?, ?)
+		`, file.UUID, file.Name, file.Expiry.Unix(), session.Get("user_id"))
 		if err != nil {
 			log.Printf("Unable to insert file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
 
+		watch(file, c, db)
+
 		ctx.Redirect(http.StatusFound, "/files/")
-		return
 	})
 
 	priv.GET("/files/:uuid/", func(ctx *gin.Context) {
@@ -210,17 +225,19 @@ func Register(router *gin.Engine, c config.Config, db *sql.DB) {
 		var file file
 
 		row := db.QueryRow(`
-			SELECT uuid, name
+			SELECT uuid, name, expiry
 			FROM file
 			WHERE uuid = ?
 			AND owner_id = ?
 		`, ctx.Param("uuid"), session.Get("user_id"))
 
-		if err := row.Scan(&file.UUID, &file.Name); err != nil {
+		var expiry int64
+		if err := row.Scan(&file.UUID, &file.Name, &expiry); err != nil {
 			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
+		file.Expiry = time.Unix(expiry, 0)
 
 		ctx.HTML(http.StatusOK, "file", gin.H{
 			"File": file,

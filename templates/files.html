@@ -12,6 +12,19 @@
   <form class="upload" action="/upload" method="POST" enctype="multipart/form-data" >
     <input aria-label="File" id="file" type="file" name="file" required />
 
+    <fieldset>
+      <legend>Expires in...</legend>
+
+      <label for="hours">Hours</label>
+      <input id="hours" type="number" name="hours" placeholder="Hours" value="24" step="1" min="0" max="24" required />
+
+      <label for="minutes">Minutes</label>
+      <input id="minutes" type="number" name="minutes" placeholder="Minutes" value="0" step="1" min="0" max="59" required />
+
+      <label for="seconds">Seconds</label>
+      <input id="seconds" type="number" name="seconds" placeholder="Seconds" value="0" step="1" min="0" max="59" required />
+    </fieldset>
+
     <button type="submit">Upload</button>
   </form>
 {{ end }}
