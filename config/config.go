@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	Address      string `toml:"address"`
-	Name         string `toml:"name"`
-	Data         string `toml:"data"`
-	DatabaseFile string `toml:"database_file"`
-	Redis        Redis  `toml:"redis"`
+	Address        string   `toml:"address"`
+	Name           string   `toml:"name"`
+	Data           string   `toml:"data"`
+	DatabaseFile   string   `toml:"database_file"`
+	TrustedProxies []string `toml:"trusted_proxies"`
+	Redis          Redis    `toml:"redis"`
 }
 
 type Redis struct {
@@ -41,10 +42,6 @@ func Parse(data []byte) (Config, error) {
 	err := toml.Unmarshal(data, &c)
 	if err != nil {
 		return Config{}, err
-	}
-
-	if c.Data == "" || c.Name == "" {
-		return Config{}, errors.New("Default values are not defined")
 	}
 
 	return c, nil

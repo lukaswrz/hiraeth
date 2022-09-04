@@ -112,6 +112,7 @@ func run(c config.Config) {
 	}
 
 	router := gin.Default()
+	router.SetTrustedProxies(c.TrustedProxies)
 
 	register(router, c, db)
 
