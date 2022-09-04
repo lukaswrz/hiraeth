@@ -226,7 +226,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		ctx.Redirect(http.StatusFound, "/files/")
 	})
 
-	priv.GET("/files/:uuid/", func(ctx *gin.Context) {
+	priv.GET("/files/:uuid", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
 		row := db.QueryRow(`
@@ -273,13 +273,12 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		return
 	})
 
-	priv.GET("/files/:uuid/:name", func(ctx *gin.Context) {
+	router.GET("/downloads/:uuid", func(ctx *gin.Context) {
 		row := db.QueryRow(`
 			SELECT uuid, name
 			FROM file
 			WHERE uuid = ?
-			AND name = ?
-		`, ctx.Param("uuid"), ctx.Param("name"))
+		`, ctx.Param("uuid"))
 
 		var file file
 		if err := row.Scan(&file.UUID, &file.Name); err != nil {

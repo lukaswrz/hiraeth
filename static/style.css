@@ -89,6 +89,10 @@
       border: 2px dashed #242424;
     }
 
+    div.download a {
+      border: 2px solid #242424;
+    }
+
     body > header {
       border-bottom: 2px dashed #262626;
       background: #141414;
@@ -141,6 +145,10 @@
 
     form.login, form.revise, form.upload fieldset {
       border: 2px dashed #c4c4c4;
+    }
+
+    div.download a {
+      border: 2px solid #c4c4c4;
     }
 
     body > header {
@@ -198,6 +206,7 @@ main {
   align-self: center;
   flex-direction: column;
   padding: 10px;
+  gap: 20px;
 }
 
 body > footer {
@@ -270,4 +279,13 @@ form.upload fieldset {
 
 form.upload fieldset > * {
   flex-grow: 1;
+}
+
+div.download {
+  text-align: center;
+  padding: 20px;
+}
+
+div.download a {
+  padding: 10px;
 }

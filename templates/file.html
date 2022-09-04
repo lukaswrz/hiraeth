@@ -1,6 +1,10 @@
 {{ template "layout.html" }}
 
 {{ define "content" }}
+  <div class="download">
+    <a href="/downloads/{{ .File.UUID }}">Download</a>
+  </div>
+
   <form class="revise" action="/revise" method="POST">
     <input type="hidden" name="uuid" value="{{ .File.UUID }}" />
 

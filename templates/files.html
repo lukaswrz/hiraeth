@@ -4,7 +4,7 @@
   <ul class="files">
     {{ range $file := .Files }}
       <li class="file">
-        <a title="{{ $file.UUID }}" href="/files/{{ $file.UUID }}/">{{ $file.Name }}</a>
+        <a title="{{ $file.UUID }}" href="/files/{{ $file.UUID }}">{{ $file.Name }}</a>
       </li>
     {{ end }}
   </ul>
