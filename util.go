@@ -24,7 +24,11 @@ type user struct {
 }
 
 func watch(file file, c config.Config, db *sql.DB) {
+	log.Printf("Watching %s", file.UUID)
+
 	rm := func(uuid string, c config.Config, db *sql.DB) {
+		log.Printf("Deleting %s", file.UUID)
+
 		if err := os.Remove(filepath.Join(c.Data, uuid)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Fatalf("Unable to remove file with UUID %s: %s", uuid, err.Error())
 		}
