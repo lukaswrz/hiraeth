@@ -39,13 +39,11 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 	router.Use(sessions.Sessions("session", store))
 
-	pub := router.Group("/")
-
-	pub.GET("/style.css", func(ctx *gin.Context) {
+	router.GET("/style.css", func(ctx *gin.Context) {
 		ctx.File("static/style.css")
 	})
 
-	pub.GET("/", func(ctx *gin.Context) {
+	router.GET("/", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 		if session.Get("user_id") != nil {
 			ctx.Redirect(http.StatusFound, "/files/")
@@ -55,7 +53,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		ctx.HTML(http.StatusOK, "login", gin.H{})
 	})
 
-	pub.POST("/login", func(ctx *gin.Context) {
+	router.POST("/login", func(ctx *gin.Context) {
 		fuser := user{
 			Name:     ctx.PostForm("name"),
 			Password: ctx.PostForm("password"),
