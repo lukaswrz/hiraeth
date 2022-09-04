@@ -174,7 +174,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		var duration time.Duration
 		switch ctx.PostForm("unit") {
 		case "days":
-			duration = time.Duration(param * 24) * time.Hour
+			duration = time.Duration(param*24) * time.Hour
 		case "hours":
 			duration = time.Duration(param) * time.Hour
 		case "minutes":
@@ -187,7 +187,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		}
 		expiry = expiry.Add(duration)
 
-		if expiry.After(now.Add(time.Duration(24 * 365) * time.Hour)) {
+		if expiry.After(now.Add(time.Duration(24*365) * time.Hour)) {
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
