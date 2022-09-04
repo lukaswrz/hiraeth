@@ -15,14 +15,14 @@
     <fieldset>
       <legend>Expires in...</legend>
 
-      <label for="hours">Hours</label>
-      <input id="hours" type="number" name="hours" placeholder="Hours" value="24" step="1" min="0" max="24" required />
+      <input aria-label="Time" type="number" name="time" placeholder="Time" value="1" step="1" min="1" required />
 
-      <label for="minutes">Minutes</label>
-      <input id="minutes" type="number" name="minutes" placeholder="Minutes" value="0" step="1" min="0" max="59" required />
-
-      <label for="seconds">Seconds</label>
-      <input id="seconds" type="number" name="seconds" placeholder="Seconds" value="0" step="1" min="0" max="59" required />
+      <select name="unit" aria-label="Unit">
+        <option value="days" selected>Days</option>
+        <option value="hours">Hours</option>
+        <option value="minutes">Minutes</option>
+        <option value="seconds">Seconds</option>
+      </select>
     </fieldset>
 
     <button type="submit">Upload</button>

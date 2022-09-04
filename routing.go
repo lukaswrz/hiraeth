@@ -162,27 +162,35 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	priv.POST("/upload", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
-		expiry := time.Now()
+		now := time.Now()
+		expiry := now
 
-		var param int
-		param, err := strconv.Atoi(ctx.Request.PostFormValue("hours"))
-		if err != nil || param > 24 || param < 0 {
+		param, err := strconv.Atoi(ctx.PostForm("time"))
+		if err != nil {
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
-		expiry = expiry.Add(time.Duration(param) * time.Hour)
-		param, err = strconv.Atoi(ctx.PostForm("minutes"))
-		if err != nil || param > 59 || param < 0 {
+
+		var duration time.Duration
+		switch ctx.PostForm("unit") {
+		case "days":
+			duration = time.Duration(param * 24) * time.Hour
+		case "hours":
+			duration = time.Duration(param) * time.Hour
+		case "minutes":
+			duration = time.Duration(param) * time.Minute
+		case "seconds":
+			duration = time.Duration(param) * time.Second
+		default:
+			ctx.AbortWithStatus(http.StatusBadRequest)
+			return
+		}
+		expiry = expiry.Add(duration)
+
+		if expiry.After(now.Add(time.Duration(24 * 365) * time.Hour)) {
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
-		expiry = expiry.Add(time.Duration(param) * time.Minute)
-		param, err = strconv.Atoi(ctx.PostForm("seconds"))
-		if err != nil || param > 59 || param < 0 {
-			ctx.Redirect(http.StatusFound, "/files/")
-			return
-		}
-		expiry = expiry.Add(time.Duration(param) * time.Second)
 
 		ffile, err := ctx.FormFile("file")
 		if err != nil {
