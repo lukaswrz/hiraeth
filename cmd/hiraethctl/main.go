@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -88,28 +87,28 @@ func main() {
 							c := getConfig(cf)
 							db := getDB(c)
 
-							name := ctx.Args().First()
-							if ctx.Args().Len() != 1 {
-								return errors.New("invalid number of arguments")
+							for _, name := range ctx.Args().Slice() {
+								fmt.Fprintf(os.Stderr, "Enter password for new user %s: ", name)
+								bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+								fmt.Fprint(os.Stderr, "\n")
+								if err != nil {
+									return err
+								}
+								hashedPassword, err := bcrypt.GenerateFromPassword(bytePassword, 12)
+								if err != nil {
+									return err
+								}
+
+								_, err = db.Exec(`
+									INSERT INTO user (name, password)
+									VALUES (?, ?)
+								`, name, hashedPassword)
+								if err != nil {
+									return err
+								}
 							}
 
-							fmt.Fprintf(os.Stderr, "Enter password for new user %s: ", name)
-							bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-							fmt.Fprint(os.Stderr, "\n")
-							if err != nil {
-								return err
-							}
-							hashedPassword, err := bcrypt.GenerateFromPassword(bytePassword, 12)
-							if err != nil {
-								return err
-							}
-
-							_, err = db.Exec(`
-								INSERT INTO user (name, password)
-								VALUES (?, ?)
-							`, name, hashedPassword)
-
-							return err
+							return nil
 						},
 					},
 				},
@@ -120,6 +119,6 @@ func main() {
 	app.Setup()
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatalf("Argument error: %s", err.Error())
+		log.Fatalf("Error: %s", err.Error())
 	}
 }
