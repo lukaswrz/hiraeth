@@ -93,6 +93,18 @@
       border: 2px solid #242424;
     }
 
+    ul.files li:not(:last-child) {
+      border-bottom: 1px solid #222222;
+    }
+
+    ul.files li:not(:first-child) {
+      border-top: 1px solid #222222;
+    }
+
+    ul.files li:hover {
+      background: #f6f6f602;
+    }
+
     body > header {
       border-bottom: 2px dashed #262626;
       background: #141414;
@@ -151,6 +163,18 @@
       border: 2px solid #c4c4c4;
     }
 
+    ul.files li:not(:last-child) {
+      border-bottom: 1px solid #d2d2d2;
+    }
+
+    ul.files li:not(:first-child) {
+      border-top: 1px solid #d2d2d2;
+    }
+
+    ul.files li:hover {
+      background: #12121206;
+    }
+
     body > header {
       border-bottom: 2px dashed #c0c0c0;
       background: #f0f0f0;
@@ -179,10 +203,27 @@ nav.locations > ul, nav.session > ul {
   gap: 15px;
 }
 
-nav.locations > ul > li, nav.session > ul > li {
+nav.locations > ul li, nav.session > ul li {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+ul.files {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+ul.files li {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  transition: all 0.4s ease;
+  transition-property: background;
 }
 
 body > header {
