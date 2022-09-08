@@ -8,6 +8,9 @@ database_file = "hiraeth.db"
 trusted_proxies = [
   "192.168.1.2"
 ]
+inline_types = [
+  "image/png"
+]
 
 [redis]
 network = "tcp"

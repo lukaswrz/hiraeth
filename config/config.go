@@ -1,8 +1,11 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+
+	"github.com/h2non/filetype"
 
 	"github.com/BurntSushi/toml"
 )
@@ -13,6 +16,7 @@ type Config struct {
 	Data           string   `toml:"data"`
 	DatabaseFile   string   `toml:"database_file"`
 	TrustedProxies []string `toml:"trusted_proxies"`
+	InlineTypes    []string `toml:"inline_types"`
 	Redis          Redis    `toml:"redis"`
 }
 
@@ -30,6 +34,7 @@ func Parse(data []byte) (Config, error) {
 		Name:         "hiraeth",
 		Data:         "data",
 		DatabaseFile: "hiraeth.db",
+		InlineTypes:  []string{},
 		Redis: Redis{
 			Network:     "tcp",
 			Address:     "localhost:6379",
@@ -41,6 +46,12 @@ func Parse(data []byte) (Config, error) {
 	err := toml.Unmarshal(data, &c)
 	if err != nil {
 		return Config{}, err
+	}
+
+	for _, it := range c.InlineTypes {
+		if !filetype.IsMIMESupported(it) {
+			return Config{}, errors.New("unsupported MIME type")
+		}
 	}
 
 	return c, nil

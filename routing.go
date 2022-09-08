@@ -17,6 +17,8 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 
+	"github.com/h2non/filetype"
+
 	"github.com/lukaswrz/hiraeth/config"
 )
 
@@ -285,6 +287,18 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
+		}
+
+		path := filepath.Join(c.Data, file.UUID)
+		ft, err := filetype.MatchFile(path)
+		if err == nil {
+			for _, it := range c.InlineTypes {
+				if it == ft.MIME.Value {
+					ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
+					ctx.File(path)
+					break
+				}
+			}
 		}
 
 		ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
