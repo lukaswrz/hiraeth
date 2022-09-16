@@ -85,7 +85,7 @@
       border: 2px solid #702b2b;
     }
 
-    form.login, form.revise, form.upload fieldset {
+    form.login, form.revise, form.upload fieldset, form.unlock {
       border: 2px dashed #242424;
     }
 
@@ -155,7 +155,7 @@
       border: 2px solid #4c4c4c;
     }
 
-    form.login, form.revise, form.upload fieldset {
+    form.login, form.revise, form.upload fieldset, form.unlock {
       border: 2px dashed #c4c4c4;
     }
 
@@ -284,29 +284,26 @@ div.labeled-checkbox {
   justify-content: flex-start;
 }
 
-form.login, form.upload, form.revise {
+form.login, form.upload, form.revise, form.unlock {
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 20px;
 }
 
-form.login {
+form.login, form.unlock {
   width: fit-content;
   margin: auto;
 }
 
-form.login > button[type="submit"] {
+form.login > button[type="submit"], form.unlock > button[type="submit"] {
   width: fit-content;
   align-self: center;
-}
-
-form.login > button[type="submit"] {
   padding-right: 20px;
   padding-left: 20px;
 }
 
-form.login > button[type="submit"]:hover, form.login > button[type="submit"]:focus {
+form.login > button[type="submit"]:hover, form.login > button[type="submit"]:focus, form.unlock > button[type="submit"]:hover, form.unlock > button[type="submit"]:focus {
   padding-right: 40px;
   padding-left: 40px;
 }

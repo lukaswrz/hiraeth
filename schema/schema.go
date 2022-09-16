@@ -20,6 +20,7 @@ func Init(db *sql.DB) error {
 			uuid CHAR(32) NOT NULL,
 			name TEXT NOT NULL,
 			expiry INTEGER NOT NULL,
+			password TEXT,
 			owner_id INT NOT NULL,
 			PRIMARY KEY (uuid),
 			FOREIGN KEY(owner_id) REFERENCES user (id)

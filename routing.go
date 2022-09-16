@@ -22,11 +22,28 @@ import (
 	"github.com/lukaswrz/hiraeth/config"
 )
 
+func download(file file, ctx *gin.Context, c config.Config) {
+	path := filepath.Join(c.Data, file.UUID)
+	ft, err := filetype.MatchFile(path)
+	if err == nil {
+		for _, it := range c.InlineTypes {
+			if it == ft.MIME.Value {
+				ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
+				ctx.File(path)
+				break
+			}
+		}
+	}
+
+	ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
+}
+
 func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromFiles("login", "templates/meta.html", "templates/login.html")
 	renderer.AddFromFiles("files", "templates/meta.html", "templates/layout.html", "templates/files.html")
 	renderer.AddFromFiles("file", "templates/meta.html", "templates/layout.html", "templates/file.html")
+	renderer.AddFromFiles("unlock", "templates/meta.html", "templates/unlock.html")
 
 	router.HTMLRender = renderer
 
@@ -164,6 +181,8 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	priv.POST("/upload", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
+		fpassword := ctx.PostForm("password")
+
 		now := time.Now()
 		expiry := now
 
@@ -213,10 +232,26 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			return
 		}
 
+		var password sql.NullString
+		if len(fpassword) == 0 {
+			password = sql.NullString{}
+		} else {
+			hash, err := bcrypt.GenerateFromPassword([]byte(fpassword), 12)
+			if err != nil {
+				log.Printf("Unable to hash provided password: %s", err.Error())
+				ctx.Redirect(http.StatusFound, "/files/")
+				return
+			}
+			password = sql.NullString{
+				String: string(hash),
+				Valid:  true,
+			}
+		}
+
 		_, err = db.Exec(`
-			INSERT INTO file (uuid, name, expiry, owner_id)
-			VALUES (?, ?, ?, ?)
-		`, file.UUID, file.Name, file.Expiry.Unix(), session.Get("user_id"))
+			INSERT INTO file (uuid, name, expiry, password, owner_id)
+			VALUES (?, ?, ?, ?, ?)
+		`, file.UUID, file.Name, file.Expiry.Unix(), password, session.Get("user_id"))
 		if err != nil {
 			log.Printf("Unable to insert file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
@@ -277,30 +312,58 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 	router.GET("/downloads/:uuid", func(ctx *gin.Context) {
 		row := db.QueryRow(`
-			SELECT uuid, name
-			FROM file
-			WHERE uuid = ?
+			SELECT f.uuid, f.name, f.password, u.id, u.name
+			FROM file f
+			JOIN user u
+			ON f.owner_id = u.id
+			WHERE f.uuid = ?
 		`, ctx.Param("uuid"))
 
 		var file file
-		if err := row.Scan(&file.UUID, &file.Name); err != nil {
+		var password sql.NullString
+		var owner user
+		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
 			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
 
-		path := filepath.Join(c.Data, file.UUID)
-		ft, err := filetype.MatchFile(path)
-		if err == nil {
-			for _, it := range c.InlineTypes {
-				if it == ft.MIME.Value {
-					ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
-					ctx.File(path)
-					break
-				}
-			}
+		session := sessions.Default(ctx)
+		if session.Get("user_id") != owner.ID && password.Valid {
+			ctx.HTML(http.StatusOK, "unlock", gin.H{
+				"File": file,
+			})
+		} else {
+			download(file, ctx, c)
+		}
+	})
+
+	router.POST("/downloads/:uuid", func(ctx *gin.Context) {
+		fpassword := ctx.PostForm("password")
+
+		row := db.QueryRow(`
+			SELECT f.uuid, f.name, f.password, u.id, u.name
+			FROM file f
+			JOIN user u
+			ON f.owner_id = u.id
+			WHERE f.uuid = ?
+		`, ctx.Param("uuid"))
+
+		var file file
+		var password sql.NullString
+		var owner user
+		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
+			log.Printf("Could not copy values from database: %s", err.Error())
+			ctx.Redirect(http.StatusFound, "/")
+			return
 		}
 
-		ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
+		session := sessions.Default(ctx)
+		if session.Get("user_id") != owner.ID && password.Valid && bcrypt.CompareHashAndPassword([]byte(password.String), []byte(fpassword)) != nil {
+			ctx.Redirect(http.StatusFound, "/")
+			return
+		}
+
+		download(file, ctx, c)
 	})
 }
