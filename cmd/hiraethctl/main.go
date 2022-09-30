@@ -64,6 +64,9 @@ func main() {
 	app := &cli.App{
 		Name:  "hiraethctl",
 		Usage: "administration tools for hiraeth",
+		Action: func(ctx *cli.Context) error {
+			return nil
+		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "config",
