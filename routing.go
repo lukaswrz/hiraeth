@@ -22,22 +22,6 @@ import (
 	"github.com/lukaswrz/hiraeth/config"
 )
 
-func download(file file, ctx *gin.Context, c config.Config) {
-	path := filepath.Join(c.Data, file.UUID)
-	ft, err := filetype.MatchFile(path)
-	if err == nil {
-		for _, it := range c.InlineTypes {
-			if it == ft.MIME.Value {
-				ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
-				ctx.File(path)
-				break
-			}
-		}
-	}
-
-	ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
-}
-
 func register(router *gin.Engine, c config.Config, db *sql.DB) {
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromFiles("login", "templates/meta.html", "templates/login.html")
@@ -310,6 +294,22 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		return
 	})
 
+	dl := func(file file, ctx *gin.Context, c config.Config) {
+		path := filepath.Join(c.Data, file.UUID)
+		ft, err := filetype.MatchFile(path)
+		if err == nil {
+			for _, it := range c.InlineTypes {
+				if it == ft.MIME.Value {
+					ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
+					ctx.File(path)
+					break
+				}
+			}
+		}
+
+		ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
+	}
+
 	router.GET("/downloads/:uuid", func(ctx *gin.Context) {
 		row := db.QueryRow(`
 			SELECT f.uuid, f.name, f.password, u.id, u.name
@@ -334,7 +334,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 				"File": file,
 			})
 		} else {
-			download(file, ctx, c)
+			dl(file, ctx, c)
 		}
 	})
 
@@ -364,6 +364,6 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			return
 		}
 
-		download(file, ctx, c)
+		dl(file, ctx, c)
 	})
 }
