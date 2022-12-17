@@ -14,15 +14,12 @@ import (
 
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 
 	"github.com/h2non/filetype"
-
-	"github.com/lukaswrz/hiraeth/config"
 )
 
-func register(router *gin.Engine, c config.Config, db *sql.DB) {
+func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, logger *log.Logger, data string, inlineTypes []string) {
 	renderer := multitemplate.NewRenderer()
 	renderer.AddFromFiles("login", "templates/meta.html", "templates/login.html")
 	renderer.AddFromFiles("files", "templates/meta.html", "templates/layout.html", "templates/files.html")
@@ -31,16 +28,9 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 	router.HTMLRender = renderer
 
-	kp := [][]byte{}
-	for _, value := range c.Redis.KeyPairs {
-		kp = append(kp, []byte(value))
+	for _, middleware := range middlewares {
+		router.Use(middleware)
 	}
-	store, err := redis.NewStore(c.Redis.Connections, c.Redis.Network, c.Redis.Address, c.Redis.Password, kp...)
-	if err != nil {
-		log.Fatalf("Unable to create Redis store: %s", err.Error())
-	}
-
-	router.Use(sessions.Sessions("session", store))
 
 	router.GET("/style.css", func(ctx *gin.Context) {
 		ctx.File("static/style.css")
@@ -79,7 +69,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		session.Set("user_id", user.ID)
 		err = session.Save()
 		if err != nil {
-			log.Printf("Could not save data to session: %s", err.Error())
+			logger.Printf("Could not save data to session: %s", err.Error())
 			ctx.AbortWithStatus(500)
 			return
 		}
@@ -135,7 +125,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		`, session.Get("user_id"))
 
 		if err != nil {
-			log.Printf("Could not query database: %s", err.Error())
+			logger.Printf("Could not query database: %s", err.Error())
 			ctx.AbortWithStatus(500)
 			return
 		}
@@ -146,7 +136,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		for rows.Next() {
 			var file file
 			if err := rows.Scan(&file.UUID, &file.Name); err != nil {
-				log.Printf("Could not copy values from database: %s", err.Error())
+				logger.Printf("Could not copy values from database: %s", err.Error())
 				ctx.AbortWithStatus(500)
 				return
 			}
@@ -199,7 +189,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 
 		ffile, err := ctx.FormFile("file")
 		if err != nil {
-			log.Printf("Unable to read file from form data: %s", err.Error())
+			logger.Printf("Unable to read file from form data: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -210,8 +200,8 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			Expiry: expiry,
 		}
 
-		if err := ctx.SaveUploadedFile(ffile, filepath.Join(c.Data, file.UUID)); err != nil {
-			log.Printf("Unable to save uploaded file: %s", err.Error())
+		if err := ctx.SaveUploadedFile(ffile, filepath.Join(data, file.UUID)); err != nil {
+			logger.Printf("Unable to save uploaded file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -222,7 +212,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		} else {
 			hash, err := bcrypt.GenerateFromPassword([]byte(fpassword), 12)
 			if err != nil {
-				log.Printf("Unable to hash provided password: %s", err.Error())
+				logger.Printf("Unable to hash provided password: %s", err.Error())
 				ctx.Redirect(http.StatusFound, "/files/")
 				return
 			}
@@ -237,12 +227,12 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			VALUES (?, ?, ?, ?, ?)
 		`, file.UUID, file.Name, file.Expiry.Unix(), password, session.Get("user_id"))
 		if err != nil {
-			log.Printf("Unable to insert file: %s", err.Error())
+			logger.Printf("Unable to insert file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
 
-		watch(file, c, db)
+		watch(file, data, db)
 
 		ctx.Redirect(http.StatusFound, "/files/")
 	})
@@ -260,7 +250,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		var file file
 		var expiry int64
 		if err := row.Scan(&file.UUID, &file.Name, &expiry); err != nil {
-			log.Printf("Could not copy values from database: %s", err.Error())
+			logger.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -279,7 +269,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			Name: ctx.PostForm("name"),
 		}
 
-		_, err = db.Exec(`
+		_, err := db.Exec(`
 			UPDATE file
 			SET
 				name = ?
@@ -287,18 +277,18 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			AND owner_id = ?
 		`, file.Name, file.UUID, session.Get("user_id"))
 		if err != nil {
-			log.Printf("Unable to update file: %s", err.Error())
+			logger.Printf("Unable to update file: %s", err.Error())
 		}
 
 		ctx.Redirect(http.StatusFound, "/files/")
 		return
 	})
 
-	dl := func(file file, ctx *gin.Context, c config.Config) {
-		path := filepath.Join(c.Data, file.UUID)
+	dl := func(file file, ctx *gin.Context) {
+		path := filepath.Join(data, file.UUID)
 		ft, err := filetype.MatchFile(path)
 		if err == nil {
-			for _, it := range c.InlineTypes {
+			for _, it := range inlineTypes {
 				if it == ft.MIME.Value {
 					ctx.Writer.Header().Set("Content-Type", ft.MIME.Value)
 					ctx.File(path)
@@ -307,7 +297,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			}
 		}
 
-		ctx.FileAttachment(filepath.Join(c.Data, file.UUID), file.Name)
+		ctx.FileAttachment(filepath.Join(data, file.UUID), file.Name)
 	}
 
 	router.GET("/downloads/:uuid", func(ctx *gin.Context) {
@@ -323,7 +313,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		var password sql.NullString
 		var owner user
 		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
-			log.Printf("Could not copy values from database: %s", err.Error())
+			logger.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
@@ -334,7 +324,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 				"File": file,
 			})
 		} else {
-			dl(file, ctx, c)
+			dl(file, ctx)
 		}
 	})
 
@@ -353,7 +343,7 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 		var password sql.NullString
 		var owner user
 		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
-			log.Printf("Could not copy values from database: %s", err.Error())
+			logger.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
@@ -364,6 +354,6 @@ func register(router *gin.Engine, c config.Config, db *sql.DB) {
 			return
 		}
 
-		dl(file, ctx, c)
+		dl(file, ctx)
 	})
 }

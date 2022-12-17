@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/lukaswrz/hiraeth/config"
 )
 
 type file struct {
@@ -23,13 +21,13 @@ type user struct {
 	Password string
 }
 
-func watch(file file, c config.Config, db *sql.DB) {
+func watch(file file, data string, db *sql.DB) {
 	log.Printf("Watching %s", file.UUID)
 
-	rm := func(uuid string, c config.Config, db *sql.DB) {
+	rm := func(uuid string, data string, db *sql.DB) {
 		log.Printf("Deleting %s", file.UUID)
 
-		if err := os.Remove(filepath.Join(c.Data, uuid)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := os.Remove(filepath.Join(data, uuid)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			log.Fatalf("Unable to remove file with UUID %s: %s", uuid, err.Error())
 		}
 
@@ -44,10 +42,10 @@ func watch(file file, c config.Config, db *sql.DB) {
 
 	diff := file.Expiry.Unix() - time.Now().Unix()
 	if diff <= 0 {
-		rm(file.UUID, c, db)
+		rm(file.UUID, data, db)
 	} else {
 		time.AfterFunc(time.Duration(diff)*time.Second, func() {
-			rm(file.UUID, c, db)
+			rm(file.UUID, data, db)
 		})
 	}
 }

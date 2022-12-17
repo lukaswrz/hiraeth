@@ -3,16 +3,16 @@ module github.com/lukaswrz/hiraeth
 go 1.19
 
 require (
-	github.com/BurntSushi/toml v1.2.0
+	github.com/BurntSushi/toml v1.2.1
 	github.com/gin-contrib/multitemplate v0.0.0-20220829131020-8c2a8441bc2b
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.8.1
 	github.com/google/uuid v1.3.0
 	github.com/h2non/filetype v1.1.3
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
-	github.com/urfave/cli/v2 v2.14.0
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	github.com/urfave/cli/v2 v2.23.7
+	golang.org/x/crypto v0.4.0
+	golang.org/x/term v0.3.0
 )
 
 require (
@@ -36,9 +36,9 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20220408201424-a24fb2fb8a0f // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
