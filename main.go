@@ -105,7 +105,7 @@ func main() {
 					}()
 
 					for _, file := range files {
-						watch(file, c.Data, db)
+						watch(file, c.Data, db, logger)
 					}
 
 					router := gin.Default()

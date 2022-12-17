@@ -232,7 +232,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 			return
 		}
 
-		watch(file, data, db)
+		watch(file, data, db, logger)
 
 		ctx.Redirect(http.StatusFound, "/files/")
 	})
