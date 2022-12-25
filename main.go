@@ -36,6 +36,7 @@ type redisConfig struct {
 	Network     string   `toml:"network"`
 	Address     string   `toml:"address"`
 	Password    string   `toml:"password"`
+	DB          int      `toml:"db"`
 	KeyPairs    []string `toml:"key_pairs"`
 }
 
@@ -115,7 +116,14 @@ func main() {
 					for _, value := range c.Redis.KeyPairs {
 						kp = append(kp, []byte(value))
 					}
-					store, err := redis.NewStore(c.Redis.Connections, c.Redis.Network, c.Redis.Address, c.Redis.Password, kp...)
+					store, err := redis.NewStoreWithDB(
+						c.Redis.Connections,
+						c.Redis.Network,
+						c.Redis.Address,
+						c.Redis.Password,
+						fmt.Sprint(c.Redis.DB),
+						kp...,
+					)
 					if err != nil {
 						logger.Fatalf("Unable to create Redis store: %s", err.Error())
 					}
