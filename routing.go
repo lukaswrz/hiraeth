@@ -24,6 +24,9 @@ import (
 //go:embed templates/*.html
 var tfsys embed.FS
 
+//go:embed static/*.css static/*.js
+var sfsys embed.FS
+
 func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, logger *log.Logger, data string, inlineTypes []string) {
 	renderer := multitemplate.NewRenderer()
 	renderer.Add("login", template.Must(template.New("login.html").ParseFS(tfsys, "templates/meta.html", "templates/login.html")))
@@ -38,7 +41,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 	}
 
 	router.GET("/style.css", func(ctx *gin.Context) {
-		ctx.File("static/style.css")
+		ctx.FileFromFS("static/style.css", http.FS(sfsys))
 	})
 
 	router.GET("/", func(ctx *gin.Context) {
