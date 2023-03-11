@@ -10,7 +10,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
+	"github.com/gin-contrib/sessions/cookie"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
 
@@ -22,22 +22,13 @@ import (
 )
 
 type config struct {
-	Address        string      `toml:"address"`
-	Name           string      `toml:"name"`
-	Data           string      `toml:"data"`
-	DatabaseFile   string      `toml:"database_file"`
-	TrustedProxies []string    `toml:"trusted_proxies"`
-	InlineTypes    []string    `toml:"inline_types"`
-	Redis          redisConfig `toml:"redis"`
-}
-
-type redisConfig struct {
-	Connections int      `toml:"connections"`
-	Network     string   `toml:"network"`
-	Address     string   `toml:"address"`
-	Password    string   `toml:"password"`
-	DB          int      `toml:"db"`
-	KeyPairs    []string `toml:"key_pairs"`
+	Address        string   `toml:"address"`
+	Name           string   `toml:"name"`
+	Data           string   `toml:"data"`
+	DatabaseFile   string   `toml:"database_file"`
+	SessionSecret  string   `toml:"session_secret"`
+	TrustedProxies []string `toml:"trusted_proxies"`
+	InlineTypes    []string `toml:"inline_types"`
 }
 
 func main() {
@@ -112,21 +103,7 @@ func main() {
 					router := gin.Default()
 					router.SetTrustedProxies(c.TrustedProxies)
 
-					kp := [][]byte{}
-					for _, value := range c.Redis.KeyPairs {
-						kp = append(kp, []byte(value))
-					}
-					store, err := redis.NewStoreWithDB(
-						c.Redis.Connections,
-						c.Redis.Network,
-						c.Redis.Address,
-						c.Redis.Password,
-						fmt.Sprint(c.Redis.DB),
-						kp...,
-					)
-					if err != nil {
-						logger.Fatalf("Unable to create Redis store: %s", err.Error())
-					}
+					store := cookie.NewStore([]byte(c.SessionSecret))
 
 					register(router, db, []gin.HandlerFunc{
 						sessions.Sessions("session", store),

@@ -23,13 +23,5 @@ inline_types = [
   "image/jpeg",
   "application/pdf"
 ]
-
-[redis]
-network = "tcp"
-address = "localhost:6379"
-connections = 10
-password = ""
-key_pairs = [
-  "secret"
-]
+session_secret = "secret"
 ```
