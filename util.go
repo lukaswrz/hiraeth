@@ -21,14 +21,14 @@ type user struct {
 	Password string
 }
 
-func watch(file file, data string, db *sql.DB, logger *log.Logger) {
-	logger.Printf("Watching %s", file.UUID)
+func watch(file file, data string, db *sql.DB) {
+	log.Printf("Watching %s", file.UUID)
 
 	rm := func(uuid string, data string, db *sql.DB) {
-		logger.Printf("Deleting %s", file.UUID)
+		log.Printf("Deleting %s", file.UUID)
 
 		if err := os.Remove(filepath.Join(data, uuid)); err != nil && !errors.Is(err, os.ErrNotExist) {
-			logger.Fatalf("Unable to remove file with UUID %s: %s", uuid, err.Error())
+			log.Fatalf("Unable to remove file with UUID %s: %s", uuid, err.Error())
 		}
 
 		_, err := db.Exec(`
@@ -36,7 +36,7 @@ func watch(file file, data string, db *sql.DB, logger *log.Logger) {
 			WHERE uuid = ?
 		`, uuid)
 		if err != nil {
-			logger.Fatalf("Unable to delete file entry from database: %s", err.Error())
+			log.Fatalf("Unable to delete file entry from database: %s", err.Error())
 		}
 	}
 

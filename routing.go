@@ -28,7 +28,7 @@ var tfsys embed.FS
 //go:embed static/*.css static/*.js
 var sfsys embed.FS
 
-func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, logger *log.Logger, data string, inlineTypes []string) {
+func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, data string, inlineTypes []string) {
 	renderer := multitemplate.NewRenderer()
 
 	renderer.Add("login", template.Must(template.ParseFS(tfsys, "templates/meta.html", "templates/login.html")))
@@ -78,7 +78,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		session.Set("user_id", user.ID)
 		err = session.Save()
 		if err != nil {
-			logger.Printf("Could not save data to session: %s", err.Error())
+			log.Printf("Could not save data to session: %s", err.Error())
 			ctx.AbortWithStatus(500)
 			return
 		}
@@ -134,7 +134,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		`, session.Get("user_id"))
 
 		if err != nil {
-			logger.Printf("Could not query database: %s", err.Error())
+			log.Printf("Could not query database: %s", err.Error())
 			ctx.AbortWithStatus(500)
 			return
 		}
@@ -145,7 +145,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		for rows.Next() {
 			var file file
 			if err := rows.Scan(&file.UUID, &file.Name); err != nil {
-				logger.Printf("Could not copy values from database: %s", err.Error())
+				log.Printf("Could not copy values from database: %s", err.Error())
 				ctx.AbortWithStatus(500)
 				return
 			}
@@ -198,7 +198,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 
 		ffile, err := ctx.FormFile("file")
 		if err != nil {
-			logger.Printf("Unable to read file from form data: %s", err.Error())
+			log.Printf("Unable to read file from form data: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -210,7 +210,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		}
 
 		if err := ctx.SaveUploadedFile(ffile, filepath.Join(data, file.UUID)); err != nil {
-			logger.Printf("Unable to save uploaded file: %s", err.Error())
+			log.Printf("Unable to save uploaded file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -221,7 +221,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		} else {
 			hash, err := bcrypt.GenerateFromPassword([]byte(fpassword), 12)
 			if err != nil {
-				logger.Printf("Unable to hash provided password: %s", err.Error())
+				log.Printf("Unable to hash provided password: %s", err.Error())
 				ctx.Redirect(http.StatusFound, "/files/")
 				return
 			}
@@ -236,12 +236,12 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 			VALUES (?, ?, ?, ?, ?)
 		`, file.UUID, file.Name, file.Expiry.Unix(), password, session.Get("user_id"))
 		if err != nil {
-			logger.Printf("Unable to insert file: %s", err.Error())
+			log.Printf("Unable to insert file: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
 
-		watch(file, data, db, logger)
+		watch(file, data, db)
 
 		ctx.Redirect(http.StatusFound, "/files/")
 	})
@@ -259,7 +259,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		var file file
 		var expiry int64
 		if err := row.Scan(&file.UUID, &file.Name, &expiry); err != nil {
-			logger.Printf("Could not copy values from database: %s", err.Error())
+			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/files/")
 			return
 		}
@@ -286,7 +286,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 			AND owner_id = ?
 		`, file.Name, file.UUID, session.Get("user_id"))
 		if err != nil {
-			logger.Printf("Unable to update file: %s", err.Error())
+			log.Printf("Unable to update file: %s", err.Error())
 		}
 
 		ctx.Redirect(http.StatusFound, "/files/")
@@ -322,7 +322,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		var password sql.NullString
 		var owner user
 		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
-			logger.Printf("Could not copy values from database: %s", err.Error())
+			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}
@@ -352,7 +352,7 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		var password sql.NullString
 		var owner user
 		if err := row.Scan(&file.UUID, &file.Name, &password, &owner.ID, &owner.Name); err != nil {
-			logger.Printf("Could not copy values from database: %s", err.Error())
+			log.Printf("Could not copy values from database: %s", err.Error())
 			ctx.Redirect(http.StatusFound, "/")
 			return
 		}

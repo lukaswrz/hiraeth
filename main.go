@@ -32,7 +32,8 @@ type config struct {
 }
 
 func main() {
-	logger := log.New(os.Stderr, "hiraeth: ", log.Lshortfile)
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
+	log.SetPrefix("hiraeth: ")
 
 	c := config{
 		Address:      "localhost:8080",
@@ -61,9 +62,9 @@ func main() {
 				Name:  "run",
 				Usage: "run hiraeth",
 				Action: func(ctx *cli.Context) error {
-					readConfig(cf, paths, toml.Unmarshal, &c, logger)
-					db := getDB(c, logger)
-					initData(c, logger)
+					readConfig(cf, paths, toml.Unmarshal, &c)
+					db := getDB(c)
+					initData(c)
 
 					// Schedule the deletion of temporary files.
 					var files []file
@@ -73,7 +74,7 @@ func main() {
 							FROM file
 						`)
 						if err != nil {
-							logger.Fatalf("Could not query database: %s", err.Error())
+							log.Fatalf("Could not query database: %s", err.Error())
 							return
 						}
 						defer rows.Close()
@@ -82,7 +83,7 @@ func main() {
 							var file file
 							var expiry int64
 							if err := rows.Scan(&file.UUID, &expiry); err != nil {
-								logger.Fatalf("Could not copy values from database: %s", err.Error())
+								log.Fatalf("Could not copy values from database: %s", err.Error())
 								return
 							}
 
@@ -91,13 +92,13 @@ func main() {
 							files = append(files, file)
 						}
 						if err = rows.Err(); err != nil {
-							logger.Fatalf("Error encountered during iteration: %s", err.Error())
+							log.Fatalf("Error encountered during iteration: %s", err.Error())
 							return
 						}
 					}()
 
 					for _, file := range files {
-						watch(file, c.Data, db, logger)
+						watch(file, c.Data, db)
 					}
 
 					router := gin.Default()
@@ -107,10 +108,10 @@ func main() {
 
 					register(router, db, []gin.HandlerFunc{
 						sessions.Sessions("session", store),
-					}, logger, c.Data, c.InlineTypes)
+					}, c.Data, c.InlineTypes)
 
 					if err := router.Run(c.Address); err != nil {
-						logger.Fatal(err)
+						log.Fatal(err)
 					}
 
 					return nil
@@ -125,9 +126,9 @@ func main() {
 						Name:  "create",
 						Usage: "create a new user",
 						Action: func(ctx *cli.Context) error {
-							readConfig(cf, paths, toml.Unmarshal, &c, logger)
-							db := getDB(c, logger)
-							initData(c, logger)
+							readConfig(cf, paths, toml.Unmarshal, &c)
+							db := getDB(c)
+							initData(c)
 
 							for _, name := range ctx.Args().Slice() {
 								fmt.Fprintf(os.Stderr, "Enter password for new user %s: ", name)
@@ -159,11 +160,11 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Fatalf("Argument error: %s", err.Error())
+		log.Fatalf("Argument error: %s", err.Error())
 	}
 }
 
-func readConfig(path string, paths []string, unmarshal func(data []byte, v interface{}) error, v interface{}, logger *log.Logger) {
+func readConfig(path string, paths []string, unmarshal func(data []byte, v interface{}) error, v interface{}) {
 	var err error
 
 	if path == "" {
@@ -177,43 +178,43 @@ func readConfig(path string, paths []string, unmarshal func(data []byte, v inter
 		}
 
 		if path == "" {
-			logger.Fatal("Unable to locate configuration file")
+			log.Fatal("Unable to locate configuration file")
 		}
 	} else {
 		_, err = os.Stat(path)
 		if err != nil {
-			logger.Fatalf("Could not stat %s: %s", path, err.Error())
+			log.Fatalf("Could not stat %s: %s", path, err.Error())
 		}
 	}
 
 	content, err := os.ReadFile(path)
 	if err != nil {
-		logger.Fatalf("Unable to read configuration file %s: %s", path, err.Error())
+		log.Fatalf("Unable to read configuration file %s: %s", path, err.Error())
 	}
 
 	err = unmarshal(content, v)
 	if err != nil {
-		logger.Fatalf("Unable to unmarshal configuration file %s: %s", path, err.Error())
+		log.Fatalf("Unable to unmarshal configuration file %s: %s", path, err.Error())
 	}
 }
 
-func getDB(c config, logger *log.Logger) *sql.DB {
+func getDB(c config) *sql.DB {
 	db, err := sql.Open("sqlite3", c.DatabaseFile)
 	if err != nil {
-		logger.Fatalf("Error while opening database: %s", err.Error())
+		log.Fatalf("Error while opening database: %s", err.Error())
 	}
 	err = initdb(db)
 	if err != nil {
-		logger.Fatalf("Could not initialize the database: %s", err.Error())
+		log.Fatalf("Could not initialize the database: %s", err.Error())
 	}
 
 	return db
 }
 
-func initData(c config, logger *log.Logger) {
+func initData(c config) {
 	err := os.MkdirAll(c.Data, os.ModePerm)
 	if err != nil {
-		logger.Fatalf("Error while creating data directory: %s", err.Error())
+		log.Fatalf("Error while creating data directory: %s", err.Error())
 	}
 }
 
