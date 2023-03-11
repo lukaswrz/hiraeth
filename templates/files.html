@@ -1,8 +1,6 @@
 {{ template "layout.html" }}
 
 {{ define "content" }}
-  {{ printf "%#v" . }}
-
   <ul class="files">
     {{ range $file := .Files }}
       <li>
