@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -29,10 +30,11 @@ var sfsys embed.FS
 
 func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, logger *log.Logger, data string, inlineTypes []string) {
 	renderer := multitemplate.NewRenderer()
-	renderer.Add("login", template.Must(template.New("login.html").ParseFS(tfsys, "templates/meta.html", "templates/login.html")))
-	renderer.Add("files", template.Must(template.New("files.html").ParseFS(tfsys, "templates/meta.html", "templates/layout.html", "templates/files.html")))
-	renderer.Add("file", template.Must(template.New("file.html").ParseFS(tfsys, "templates/meta.html", "templates/layout.html", "templates/file.html")))
-	renderer.Add("unlock", template.Must(template.New("unlock.html").ParseFS(tfsys, "templates/meta.html", "templates/unlock.html")))
+
+	renderer.Add("login", template.Must(template.ParseFS(tfsys, "templates/meta.html", "templates/login.html")))
+	renderer.Add("files", template.Must(template.ParseFS(tfsys, "templates/meta.html", "templates/layout.html", "templates/files.html")))
+	renderer.Add("file", template.Must(template.ParseFS(tfsys, "templates/meta.html", "templates/layout.html", "templates/file.html")))
+	renderer.Add("unlock", template.Must(template.ParseFS(tfsys, "templates/meta.html", "templates/unlock.html")))
 
 	router.HTMLRender = renderer
 
@@ -40,9 +42,8 @@ func register(router *gin.Engine, db *sql.DB, middlewares []gin.HandlerFunc, log
 		router.Use(middleware)
 	}
 
-	router.GET("/style.css", func(ctx *gin.Context) {
-		ctx.FileFromFS("static/style.css", http.FS(sfsys))
-	})
+	subsfsys, _ := fs.Sub(sfsys, "static")
+	router.StaticFS("/static", http.FS(subsfsys))
 
 	router.GET("/", func(ctx *gin.Context) {
 		session := sessions.Default(ctx)

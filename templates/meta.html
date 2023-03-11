@@ -4,7 +4,8 @@
     {{ block "head" . }}
       <meta charset="utf-8" />
       <title>{{ if .Title }}{{ .Title }} - hiraeth{{ else }}hiraeth{{ end }}</title>
-      <link href="/style.css" rel="stylesheet" />
+      <link href="/static/style.css" rel="stylesheet" />
+      <link rel="icon" href="data:," />
     {{ end }}
   </head>
   <body>
