@@ -65,14 +65,14 @@
       color: #e8e8e8;
     }
 
-    input:not([type="file"]):not([type="checkbox"]), button, select {
+    input:not([type="file"]):not([type="checkbox"]), button, select, div.bar {
       color: #e8e8e8;
       background: #171717;
       border: 2px solid #e6e6e6;
       box-shadow: 0px 5px 15px 0px #00000080;
     }
 
-    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover {
+    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover, div.bar:hover {
       background: #090909;
       box-shadow: 0px 5px 20px 0px #000000BF;
     }
@@ -85,29 +85,33 @@
       border: 2px solid #702b2b;
     }
 
-    form.login, form.revise, form.upload fieldset, form.unlock {
+    form#login, form#revise, form#upload fieldset, form#unlock {
       border: 2px dashed #242424;
     }
 
-    div.download a {
+    div#download a {
       border: 2px solid #242424;
     }
 
-    ul.files li:not(:last-child) {
+    ul#files li:not(:last-child) {
       border-bottom: 1px solid #222222;
     }
 
-    ul.files li:not(:first-child) {
+    ul#files li:not(:first-child) {
       border-top: 1px solid #222222;
     }
 
-    ul.files li:hover {
+    ul#files li:hover {
       background: #f6f6f602;
     }
 
     body > header {
       border-bottom: 2px dashed #262626;
       background: #141414;
+    }
+
+    div.bar div.progress {
+      background: #3dab07;
     }
   }
 
@@ -135,14 +139,14 @@
       color: #141414;
     }
 
-    input:not([type="file"]):not([type="checkbox"]), button, select {
+    input:not([type="file"]):not([type="checkbox"]), button, select, div.bar {
       color: #141414;
       background: #f9f9f9;
       border: 2px solid #b7b7b7;
       box-shadow: 0px 5px 10px 0px #00000040;
     }
 
-    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover {
+    input:not([type="file"]):not([type="checkbox"]):hover, button:hover, select:hover, div.bar:hover {
       background: #eaeaea;
       box-shadow: 0px 5px 15px 0px #00000080;
     }
@@ -155,29 +159,33 @@
       border: 2px solid #4c4c4c;
     }
 
-    form.login, form.revise, form.upload fieldset, form.unlock {
+    form#login, form#revise, form#upload fieldset, form#unlock {
       border: 2px dashed #c4c4c4;
     }
 
-    div.download a {
+    div#download a {
       border: 2px solid #c4c4c4;
     }
 
-    ul.files li:not(:last-child) {
+    ul#files li:not(:last-child) {
       border-bottom: 1px solid #d2d2d2;
     }
 
-    ul.files li:not(:first-child) {
+    ul#files li:not(:first-child) {
       border-top: 1px solid #d2d2d2;
     }
 
-    ul.files li:hover {
+    ul#files li:hover {
       background: #12121206;
     }
 
     body > header {
       border-bottom: 2px dashed #c0c0c0;
       background: #f0f0f0;
+    }
+
+    div.bar div.progress {
+      background: #75da43;
     }
   }
 }
@@ -186,13 +194,13 @@ body {
   font-family: sans-serif;
 }
 
-nav.locations, nav.session {
+nav#locations, nav#session {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-nav.locations > ul, nav.session > ul {
+nav#locations > ul, nav#session > ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
@@ -203,13 +211,13 @@ nav.locations > ul, nav.session > ul {
   gap: 15px;
 }
 
-nav.locations > ul li, nav.session > ul li {
+nav#locations > ul li, nav#session > ul li {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-ul.files {
+ul#files {
   list-style-type: none;
   margin: 0;
   padding: 0;
@@ -218,7 +226,7 @@ ul.files {
   justify-content: center;
 }
 
-ul.files li {
+ul#files li {
   display: flex;
   align-items: center;
   padding: 10px;
@@ -255,11 +263,14 @@ body > footer {
   padding: 10px;
 }
 
-input:not([type="file"]):not([type="checkbox"]), button, select {
+input:not([type="file"]):not([type="checkbox"]), button, select, div.bar {
   display: block;
   transition: all 0.6s ease;
   transition-property: background, padding, margin, border, box-shadow;
   font-size: 16px;
+}
+
+input:not([type="file"]):not([type="checkbox"]), button, select, div.description {
   padding-top: 5px;
   padding-bottom: 5px;
   padding-right: 10px;
@@ -284,46 +295,59 @@ div.labeled-checkbox {
   justify-content: flex-start;
 }
 
-form.login, form.upload, form.revise, form.unlock {
+form#login, form#upload, form#revise, form#unlock {
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 20px;
 }
 
-form.login, form.unlock {
+form#login, form#unlock {
   width: fit-content;
   margin: auto;
 }
 
-form.login > button[type="submit"], form.unlock > button[type="submit"] {
+form#login > button[type="submit"], form#unlock > button[type="submit"] {
   width: fit-content;
   align-self: center;
   padding-right: 20px;
   padding-left: 20px;
 }
 
-form.login > button[type="submit"]:hover, form.login > button[type="submit"]:focus, form.unlock > button[type="submit"]:hover, form.unlock > button[type="submit"]:focus {
+form#login > button[type="submit"]:hover, form#login > button[type="submit"]:focus, form#unlock > button[type="submit"]:hover, form#unlock > button[type="submit"]:focus {
   padding-right: 40px;
   padding-left: 40px;
 }
 
-form.upload fieldset {
+form#upload fieldset {
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 20px;
 }
 
-form.upload fieldset > * {
+form#upload fieldset > * {
   flex-grow: 1;
 }
 
-div.download {
+div#download {
   text-align: center;
   padding: 20px;
 }
 
-div.download a {
+div#download a {
   padding: 10px;
+}
+
+div.bar {
+  width: 100%;
+  height: 32px;
+}
+
+div.bar div.progress {
+  height: 100%;
+}
+
+div.bar div.progress div.description {
+  white-space: nowrap;
 }

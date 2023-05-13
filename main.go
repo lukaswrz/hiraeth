@@ -27,6 +27,8 @@ type config struct {
 	Data           string   `toml:"data"`
 	DatabaseFile   string   `toml:"database_file"`
 	SessionSecret  string   `toml:"session_secret"`
+	ChunkSize      int64    `toml:"chunk_size"`
+	Timeout        int      `toml:"timeout"`
 	TrustedProxies []string `toml:"trusted_proxies"`
 	InlineTypes    []string `toml:"inline_types"`
 }
@@ -38,6 +40,8 @@ func main() {
 	c := config{
 		Address:      "localhost:8080",
 		DatabaseFile: "hiraeth.db",
+		ChunkSize:    1024 * 1024 * 32,
+		Timeout:      60,
 	}
 
 	paths := []string{
@@ -66,30 +70,39 @@ func main() {
 					db := getDB(c)
 					initData(c)
 
-					// Schedule the deletion of temporary files.
-					var files []file
+					// Schedule the deletion of temporary files and delete unfinished ones.
 					func() {
 						rows, err := db.Query(`
-							SELECT uuid, expiry
+							SELECT uuid, expiry, done
 							FROM file
 						`)
 						if err != nil {
 							log.Fatalf("Could not query database: %s", err.Error())
 							return
 						}
-						defer rows.Close()
+						defer func() {
+							err := rows.Close()
+							if err != nil {
+								log.Fatalf("Unable to close rows: %s", err.Error())
+								return
+							}
+						}()
 
 						for rows.Next() {
-							var file file
+							var fileuuid string
 							var expiry int64
-							if err := rows.Scan(&file.UUID, &expiry); err != nil {
+							var done bool
+							if err := rows.Scan(&fileuuid, &expiry, &done); err != nil {
 								log.Fatalf("Could not copy values from database: %s", err.Error())
 								return
 							}
 
-							file.Expiry = time.Unix(expiry, 0)
-
-							files = append(files, file)
+							if done {
+								watch(fileuuid, time.Unix(expiry, 0), c.Data, db)
+							} else {
+								log.Printf("File %s is unfinished", fileuuid)
+								remove(fileuuid, c.Data, db)
+							}
 						}
 						if err = rows.Err(); err != nil {
 							log.Fatalf("Error encountered during iteration: %s", err.Error())
@@ -97,18 +110,14 @@ func main() {
 						}
 					}()
 
-					for _, file := range files {
-						watch(file, c.Data, db)
-					}
-
 					router := gin.Default()
 					router.SetTrustedProxies(c.TrustedProxies)
 
 					store := cookie.NewStore([]byte(c.SessionSecret))
 
-					register(router, db, []gin.HandlerFunc{
-						sessions.Sessions("session", store),
-					}, c.Data, c.InlineTypes)
+					router.Use(sessions.Sessions("session", store))
+
+					register(router, db, c.Data, c.InlineTypes, c.ChunkSize, c.Timeout)
 
 					if err := router.Run(c.Address); err != nil {
 						log.Fatal(err)
@@ -118,42 +127,56 @@ func main() {
 				},
 			},
 			{
-				Name:    "user",
-				Aliases: []string{"u"},
-				Usage:   "user",
-				Subcommands: []*cli.Command{
-					{
-						Name:  "create",
-						Usage: "create a new user",
-						Action: func(ctx *cli.Context) error {
-							readConfig(cf, paths, toml.Unmarshal, &c)
-							db := getDB(c)
-							initData(c)
+				Name:  "register",
+				Usage: "create a new user",
+				Action: func(ctx *cli.Context) error {
+					readConfig(cf, paths, toml.Unmarshal, &c)
+					db := getDB(c)
+					initData(c)
 
-							for _, name := range ctx.Args().Slice() {
-								fmt.Fprintf(os.Stderr, "Enter password for new user %s: ", name)
-								bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-								fmt.Fprint(os.Stderr, "\n")
-								if err != nil {
-									return err
-								}
-								hashedPassword, err := bcrypt.GenerateFromPassword(bytePassword, 12)
-								if err != nil {
-									return err
-								}
+					for _, name := range ctx.Args().Slice() {
+						fmt.Fprintf(os.Stderr, "Enter password for new user %s: ", name)
+						bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+						fmt.Fprint(os.Stderr, "\n")
+						if err != nil {
+							return err
+						}
+						hashedPassword, err := bcrypt.GenerateFromPassword(bytePassword, 12)
+						if err != nil {
+							return err
+						}
 
-								_, err = db.Exec(`
-									INSERT INTO user (name, password)
-									VALUES (?, ?)
-								`, name, hashedPassword)
-								if err != nil {
-									return err
-								}
-							}
+						_, err = db.Exec(`
+							INSERT INTO user (name, password)
+							VALUES (?, ?)
+						`, name, hashedPassword)
+						if err != nil {
+							return err
+						}
+					}
 
-							return nil
-						},
-					},
+					return nil
+				},
+			},
+			{
+				Name:  "revoke",
+				Usage: "delete an existing user",
+				Action: func(ctx *cli.Context) error {
+					readConfig(cf, paths, toml.Unmarshal, &c)
+					db := getDB(c)
+					initData(c)
+
+					for _, name := range ctx.Args().Slice() {
+						_, err := db.Exec(`
+							DELETE FROM user
+							WHERE id = ?
+						`, name)
+						if err != nil {
+							return err
+						}
+					}
+
+					return nil
 				},
 			},
 		},
@@ -203,7 +226,7 @@ func getDB(c config) *sql.DB {
 	if err != nil {
 		log.Fatalf("Error while opening database: %s", err.Error())
 	}
-	err = initdb(db)
+	err = initDB(db)
 	if err != nil {
 		log.Fatalf("Could not initialize the database: %s", err.Error())
 	}
@@ -218,24 +241,22 @@ func initData(c config) {
 	}
 }
 
-func initdb(db *sql.DB) error {
+func initDB(db *sql.DB) error {
 	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS user (
-			id INTEGER NOT NULL,
+		CREATE TABLE IF NOT EXISTS user(
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
 			password TEXT NOT NULL,
-			PRIMARY KEY (id),
-			UNIQUE (name)
+			UNIQUE(name)
 		);
 
-		CREATE TABLE IF NOT EXISTS file (
-			uuid CHAR(32) NOT NULL,
+		CREATE TABLE IF NOT EXISTS file(
+			uuid CHAR(32) PRIMARY KEY,
 			name TEXT NOT NULL,
 			expiry INTEGER NOT NULL,
 			password TEXT,
-			owner_id INT NOT NULL,
-			PRIMARY KEY (uuid),
-			FOREIGN KEY(owner_id) REFERENCES user (id)
+			done INTEGER NOT NULL,
+			owner_id INTEGER NOT NULL REFERENCES user(id)
 		);
 	`)
 

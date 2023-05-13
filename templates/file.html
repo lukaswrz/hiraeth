@@ -1,15 +1,15 @@
 {{ template "layout.html" }}
 
 {{ define "content" }}
-  <div class="download">
+  <div id="download">
     <a href="/downloads/{{ .File.UUID }}">Download</a>
   </div>
 
-  <form class="revise" action="/revise" method="POST">
+  <form id="revise" action="/revise" method="POST">
     <input type="hidden" name="uuid" value="{{ .File.UUID }}" />
 
-    <label for="name">Filename</label>
-    <input id="name" type="text" name="name" placeholder="Filename" value="{{ .File.Name }}" required />
+    <label for="filename">Filename</label>
+    <input id="filename" type="text" name="filename" placeholder="Filename" value="{{ .File.Name }}" required />
 
     <button type="submit">Save</button>
   </form>

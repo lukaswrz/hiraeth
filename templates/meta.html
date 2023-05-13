@@ -6,6 +6,8 @@
       <title>{{ if .Title }}{{ .Title }} - hiraeth{{ else }}hiraeth{{ end }}</title>
       <link href="/static/style.css" rel="stylesheet" />
       <link rel="icon" href="data:," />
+      {{ block "scripts" . }}
+      {{ end }}
     {{ end }}
   </head>
   <body>

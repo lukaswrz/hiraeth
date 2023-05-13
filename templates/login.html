@@ -2,12 +2,12 @@
 
 {{ define "layout" }}
   <main>
-    <form class="login" action="/login" method="POST">
+    <form id="login" action="/login" method="POST">
       <label for="name">Username</label>
-      <input id="name" type="text" name="name" placeholder="Username" required />
+      <input id="name" name="name" type="text" required placeholder="Username" />
 
       <label for="password">Password</label>
-      <input id="password" type="password" name="password" placeholder="Password" required />
+      <input id="password" name="password" type="password" required placeholder="Password" />
 
       <button type="submit">Login</button>
     </form>

@@ -24,4 +24,5 @@ inline_types = [
   "application/pdf"
 ]
 session_secret = "secret"
+chunk_size = 1048576
 ```

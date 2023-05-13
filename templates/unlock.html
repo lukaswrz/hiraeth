@@ -2,7 +2,7 @@
 
 {{ define "layout" }}
   <main>
-    <form class="unlock" action="/downloads/{{ .File.UUID }}" method="POST">
+    <form id="unlock" action="/downloads/{{ .File.UUID }}" method="POST">
       <label for="password">Password</label>
       <input id="password" type="password" name="password" placeholder="Password" required />
 

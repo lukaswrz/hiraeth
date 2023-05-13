@@ -2,18 +2,18 @@
 
 {{ define "layout" }}
   <header>
-    <nav class="locations">
+    <nav id="locations">
       <ul>
         <li>
           <a href="/files">Files</a>
         </li>
       </ul>
     </nav>
-    <nav class="session">
+    <nav id="session">
       <ul>
         <li>
-          <form class="logout" action="/logout" method="POST">
-            <button class="logout" type="submit">
+          <form id="logout" action="/logout" method="POST">
+            <button type="submit">
               Logout
             </button>
           </form>
