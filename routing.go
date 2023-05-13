@@ -564,7 +564,6 @@ func register(router *gin.Engine, db *sql.DB, data string, inlineTypes []string,
 		}
 
 		ctx.Redirect(http.StatusFound, "/files/")
-		return
 	})
 
 	router.GET("/downloads/:uuid", func(ctx *gin.Context) {
