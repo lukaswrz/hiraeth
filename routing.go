@@ -242,6 +242,11 @@ func register(router *gin.Engine, db *sql.DB, data string, inlineTypes []string,
 		expiry := now
 
 		add, err := asUnit(in.Unit, time.Duration(in.Time))
+		if err != nil {
+			ctx.Redirect(http.StatusFound, "/files/")
+			return
+		}
+
 		expiry = expiry.Add(add)
 
 		if expiry.After(now.Add(time.Duration(24*365) * time.Hour)) {
@@ -310,6 +315,13 @@ func register(router *gin.Engine, db *sql.DB, data string, inlineTypes []string,
 		expiry := now
 
 		add, err := asUnit(in.Unit, time.Duration(in.Time))
+		if err != nil {
+			ctx.JSON(400, gin.H{
+				"error": "Cannot convert duration to unit",
+			})
+			return
+		}
+
 		expiry = expiry.Add(add)
 
 		if expiry.After(now.Add(time.Duration(24*365) * time.Hour)) {
