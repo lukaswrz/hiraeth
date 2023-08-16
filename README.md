@@ -23,6 +23,6 @@ inline_types = [
   "image/jpeg",
   "application/pdf"
 ]
-session_secret = "secret"
+session_secret_file = "/path/to/secret"
 chunk_size = 1048576
 ```

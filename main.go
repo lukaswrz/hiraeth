@@ -22,15 +22,15 @@ import (
 )
 
 type config struct {
-	Address        string   `toml:"address"`
-	Name           string   `toml:"name"`
-	Data           string   `toml:"data"`
-	DatabaseFile   string   `toml:"database_file"`
-	SessionSecret  string   `toml:"session_secret"`
-	ChunkSize      int64    `toml:"chunk_size"`
-	Timeout        int      `toml:"timeout"`
-	TrustedProxies []string `toml:"trusted_proxies"`
-	InlineTypes    []string `toml:"inline_types"`
+	Address           string   `toml:"address"`
+	Name              string   `toml:"name"`
+	Data              string   `toml:"data"`
+	DatabaseFile      string   `toml:"database_file"`
+	SessionSecretFile string   `toml:"session_secret_file"`
+	ChunkSize         int64    `toml:"chunk_size"`
+	Timeout           int      `toml:"timeout"`
+	TrustedProxies    []string `toml:"trusted_proxies"`
+	InlineTypes       []string `toml:"inline_types"`
 }
 
 func main() {
@@ -113,7 +113,17 @@ func main() {
 					router := gin.Default()
 					router.SetTrustedProxies(c.TrustedProxies)
 
-					store := cookie.NewStore([]byte(c.SessionSecret))
+					secret, err := os.ReadFile(c.SessionSecretFile)
+
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					if len(secret) == 0 {
+						log.Fatal("Secret cannot be empty")
+					}
+
+					store := cookie.NewStore(secret)
 
 					router.Use(sessions.Sessions("session", store))
 
