@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let start = 0; start < file.size; start += chunkSize) {
             progress.style.width = `${start / file.size * 100}%`;
-            description.innerText = `Sending chunk ${start / chunkSize + 1}/${file.size / chunkSize}`;
+            description.innerText = `Sending chunk ${start / chunkSize + 1}/${Math.ceil(file.size / chunkSize)}`;
 
             const chunk = file.slice(start, start + chunkSize)
 
