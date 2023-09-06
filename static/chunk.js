@@ -1,4 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
+const whenReady = callback => {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        callback();
+    } else {
+        document.addEventListener('DOMContentLoaded', callback);
+    }
+};
+
+whenReady(() => {
     const uploadForm = document.querySelector('form#upload');
 
     const bar = document.createElement('div');
